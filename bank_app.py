@@ -1,7 +1,5 @@
-# =========================
+
 # BANK APPLICATION (OOP)
-# WITH ADMIN ROLE + TIMESTAMPS
-# =========================
 
 from datetime import datetime
 
