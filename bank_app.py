@@ -3,7 +3,6 @@
 
 from datetime import datetime
 
-
 # -------- Branch Class --------
 class Branch:
     def __init__(self, branch_name, branch_code):
@@ -22,11 +21,11 @@ class Customer:
 
 
 # -------- Base Account Class --------
-class Account:
+class Account: #en
     def __init__(self, account_number, customer, balance):
         self.account_number = account_number
         self.customer = customer
-        self._balance = balance
+        self._balance = balance     #en
         self.transactions = []
 
     # ⏱ Timestamped transaction helper
@@ -39,7 +38,7 @@ class Account:
         self._add_transaction(f"Deposited ₹{amount}")
         print(f"₹{amount} deposited successfully.")
 
-    def withdraw(self, amount):
+    def withdraw(self, amount):   #ab
         raise NotImplementedError
 
     def get_balance(self):
@@ -110,7 +109,7 @@ class PrivilegeAccount(Account):
 # -------- Bank Application --------
 class BankApp:
     def __init__(self):
-        self.branch = Branch("Zenshastra Main Branch", "ZS001")
+        self.branch = Branch("Zenshastra Main Branch", "ZS001") #ob
 
         # Admin credentials (POC)
         self.admin_id = "admin"
@@ -230,7 +229,7 @@ class BankApp:
             pwd = input("Password: ")
 
             if cid in self.customer_db and self.customer_db[cid]["password"] == pwd:
-                customer = Customer(cid, self.customer_db[cid]["name"])
+                customer = Customer(cid, self.customer_db[cid]["name"]) #ob
                 print(f"\nLogin successful! Welcome {customer.name}")
                 self.load_account(customer)
                 break
