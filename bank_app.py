@@ -1,7 +1,10 @@
 # =========================
 # BANK APPLICATION (OOP)
-# FIXED VERSION
+# WITH ADMIN ROLE + TIMESTAMPS
 # =========================
+
+from datetime import datetime
+
 
 # -------- Branch Class --------
 class Branch:
@@ -28,13 +31,15 @@ class Account:
         self._balance = balance
         self.transactions = []
 
+    # ⏱ Timestamped transaction helper
+    def _add_transaction(self, message):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.transactions.append(f"{timestamp} | {message}")
+
     def deposit(self, amount):
-        if amount > 0:
-            self._balance += amount
-            self.transactions.append(f"Deposited ₹{amount}")
-            print(f"₹{amount} deposited successfully.")
-        else:
-            print("Invalid deposit amount.")
+        self._balance += amount
+        self._add_transaction(f"Deposited ₹{amount}")
+        print(f"₹{amount} deposited successfully.")
 
     def withdraw(self, amount):
         raise NotImplementedError
@@ -62,10 +67,10 @@ class SavingsAccount(Account):
     def withdraw(self, amount):
         if self._balance - amount >= self.MIN_BALANCE:
             self._balance -= amount
-            self.transactions.append(f"Withdrawn ₹{amount}")
+            self._add_transaction(f"Withdrawn ₹{amount}")
             print(f"₹{amount} withdrawn successfully.")
         else:
-            self.transactions.append("Failed withdrawal (Min balance)")
+            self._add_transaction("Failed withdrawal (Min balance)")
             print("Withdrawal denied! Minimum balance required.")
 
     def calculate_interest(self):
@@ -79,10 +84,10 @@ class CurrentAccount(Account):
     def withdraw(self, amount):
         if self._balance - amount >= self.MIN_BALANCE:
             self._balance -= amount
-            self.transactions.append(f"Withdrawn ₹{amount}")
+            self._add_transaction(f"Withdrawn ₹{amount}")
             print(f"₹{amount} withdrawn successfully.")
         else:
-            self.transactions.append("Failed withdrawal (Insufficient balance)")
+            self._add_transaction("Failed withdrawal (Insufficient balance)")
             print("Insufficient balance.")
 
 
@@ -94,10 +99,10 @@ class PrivilegeAccount(Account):
     def withdraw(self, amount):
         if self._balance - amount >= self.MIN_BALANCE:
             self._balance -= amount
-            self.transactions.append(f"Withdrawn ₹{amount}")
+            self._add_transaction(f"Withdrawn ₹{amount}")
             print(f"₹{amount} withdrawn successfully.")
         else:
-            self.transactions.append("Failed withdrawal (Privilege min balance)")
+            self._add_transaction("Failed withdrawal (Privilege min balance)")
             print("Minimum balance not maintained.")
 
     def calculate_interest(self):
@@ -109,21 +114,118 @@ class BankApp:
     def __init__(self):
         self.branch = Branch("Zenshastra Main Branch", "ZS001")
 
+        # Admin credentials (POC)
+        self.admin_id = "admin"
+        self.admin_password = "admin123"
+
+        # Customer database
         self.customer_db = {
             "101": {"name": "Marushka Dsilva", "password": "maru123"},
             "102": {"name": "Aditi Sharma", "password": "aditi123"},
             "103": {"name": "Rahul Verma", "password": "rahul123"}
         }
 
-        self.accounts = {}  # customer_id -> account
+        self.accounts = {}
         self.start()
 
+    # -------- Start Menu --------
     def start(self):
         print("\n===== Welcome to Bank Application =====")
         self.branch.display_branch()
-        self.login()
 
-    def login(self):
+        while True:
+            print("\n1. Admin Login")
+            print("2. Customer Login")
+
+            choice = input("Choose option: ")
+
+            if choice == "1":
+                self.admin_login()
+            elif choice == "2":
+                self.customer_login()
+            else:
+                print("Invalid choice.")
+
+    # -------- Admin Login --------
+    def admin_login(self):
+        print("\n--- Admin Login ---")
+        aid = input("Admin ID: ")
+        pwd = input("Password: ")
+
+        if aid == self.admin_id and pwd == self.admin_password:
+            print("Admin login successful.")
+            self.admin_menu()
+        else:
+            print("Invalid admin credentials.")
+
+    # -------- Admin Menu --------
+    def admin_menu(self):
+        while True:
+            print("\n--- ADMIN MENU ---")
+            print("1. Create New Customer")
+            print("2. Reset Customer Password")
+            print("3. View All Accounts")
+            print("4. Logout")
+
+            option = input("Choose option: ")
+
+            if option == "1":
+                self.create_customer()
+            elif option == "2":
+                self.reset_customer_password()
+            elif option == "3":
+                self.view_all_accounts()
+            elif option == "4":
+                print("Admin logged out.")
+                break
+            else:
+                print("Invalid option.")
+
+    # -------- Admin Functions --------
+    def create_customer(self):
+        cid = input("Enter new Customer ID: ")
+
+        if cid in self.customer_db:
+            print("Customer already exists.")
+            return
+
+        name = input("Enter customer name: ")
+        password = input("Set password: ")
+
+        self.customer_db[cid] = {
+            "name": name,
+            "password": password
+        }
+
+        print("New customer created successfully.")
+
+    def reset_customer_password(self):
+        cid = input("Enter Customer ID: ")
+
+        if cid not in self.customer_db:
+            print("Customer not found.")
+            return
+
+        new_password = input("Enter new password: ")
+        self.customer_db[cid]["password"] = new_password
+
+        print("Password reset successfully.")
+
+    def view_all_accounts(self):
+        if not self.accounts:
+            print("No accounts available.")
+            return
+
+        print("\n--- All Customer Accounts ---")
+        for cid, acc in self.accounts.items():
+            print(
+                f"Customer ID: {cid} | "
+                f"Name: {acc.customer.name} | "
+                f"Balance: ₹{acc.get_balance()}"
+            )
+
+    # -------- Customer Login --------
+    def customer_login(self):
         while True:
             print("\n--- Customer Login ---")
             cid = input("Customer ID: ")
@@ -137,6 +239,7 @@ class BankApp:
             else:
                 print("Invalid credentials. Try again.")
 
+    # -------- Load Account --------
     def load_account(self, customer):
         if customer.customer_id not in self.accounts:
             print("\nSelect Account Type:")
@@ -159,6 +262,19 @@ class BankApp:
         self.account = self.accounts[customer.customer_id]
         self.menu()
 
+    # -------- Input Validation --------
+    def get_valid_amount(self):
+        while True:
+            try:
+                amount = float(input("Amount: "))
+                if amount <= 0:
+                    print("Amount must be greater than zero.")
+                else:
+                    return amount
+            except ValueError:
+                print("Please enter a valid numeric amount.")
+
+    # -------- Customer Menu --------
     def menu(self):
         while True:
             print("\n------ MENU ------")
@@ -169,13 +285,19 @@ class BankApp:
             print("5. Transactions")
             print("6. Logout")
 
-            option = input("Choose option: ")
+            option = input("Choose option (1-6): ").strip()
+
+            if option not in {"1", "2", "3", "4", "5", "6"}:
+                print("Please select a valid option.")
+                continue
 
             if option == "1":
-                self.account.deposit(float(input("Amount: ")))
+                amount = self.get_valid_amount()
+                self.account.deposit(amount)
 
             elif option == "2":
-                self.account.withdraw(float(input("Amount: ")))
+                amount = self.get_valid_amount()
+                self.account.withdraw(amount)
 
             elif option == "3":
                 print(f"Balance: ₹{self.account.get_balance()}")
@@ -188,11 +310,7 @@ class BankApp:
 
             elif option == "6":
                 print("Logged out.")
-                self.login()
                 break
-
-            else:
-                print("Invalid option!")
 
 
 # -------- Entry Point --------
