@@ -78,6 +78,24 @@ class SavingsAccount(Account):
 
     def calculate_interest(self):
         return self._balance * self.INTEREST_RATE
+    
+    # -------- Current Account --------
+class CurrentAccount(Account):
+    MIN_BALANCE = 500
+    INTEREST_RATE = 0.02
+
+    def withdraw(self, amount):
+        with self.lock:
+            if self._balance - amount >= self.MIN_BALANCE:
+                self._balance -= amount
+                self._add_transaction(f"Withdrawn ₹{amount} (Current)")
+                print(f"[{threading.current_thread().name}] Current Withdraw ₹{amount}")
+            else:
+                print("Withdrawal denied! Minimum balance required.")
+
+    def calculate_interest(self):
+        return self._balance * self.INTEREST_RATE
+
 
 
 # -------- Privilege Account --------
@@ -310,7 +328,39 @@ class BankApp:
             elif option == "6":
                 break
 
+# -------- MRO Demonstration --------
+
+class AccountFeatures:
+    def feature(self):
+        print("AccountFeatures Method")
+
+class LoanFeatures:
+    def feature(self):
+        print("LoanFeatures Method")
+
+# -------- Premium Account (Diamond Inheritance) --------
+class PremiumAccount(SavingsAccount, CurrentAccount):
+    pass
+
+
+def show_mro():
+    print("\n===== MRO DEMONSTRATION =====")
+    
+    print("\nMRO of SavingsAccount:")
+    for cls in SavingsAccount.mro():
+        print(cls)
+
+    print("\nMRO of PrivilegeAccount:")
+    for cls in PrivilegeAccount.mro():
+        print(cls)
+
+    print("\nMRO of PremiumAccount:")
+    for cls in PremiumAccount.mro():
+        print(cls)
+
+
 
 # -------- Entry Point --------
 if __name__ == "__main__":
+    show_mro()
     BankApp()
